@@ -46,10 +46,10 @@ curl -sS -X POST http://127.0.0.1:4242/add \
 ```
 
 Responses:
-  - `200 OK` body: `Peer added: <asn>`
-  - `400 Bad Request` body: `Invalid JSON: <error>`
-  - `401 Unauthorized` body: `Unauthorized`
-  - `409 Conflict` body: `Peer already exists: <asn>`
+  - `200 OK`
+  - `400 Bad Request`
+  - `401 Unauthorized`
+  - `409 Conflict`
   - `500 Internal Server Error`
 
 ### POST `/del`
@@ -63,10 +63,10 @@ curl -sS -X POST http://127.0.0.1:4242/del \
 ```
 
 Responses:
-  - `200 OK` body: `Peer deleted: <asn>`
-  - `400 Bad Request` body: `Invalid JSON: <error>`
-  - `401 Unauthorized` body: `Unauthorized`
-  - `404 Not Found` body: `Peer not found: <asn>`
+  - `200 OK`
+  - `400 Bad Request`
+  - `401 Unauthorized`
+  - `404 Not Found`
   - `500 Internal Server Error`
 
 
