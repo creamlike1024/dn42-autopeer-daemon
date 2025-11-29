@@ -1,0 +1,15 @@
+[Unit]
+Description=DN42 Autopeer Daemon
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/etc/dn42-autopeer-daemon
+ExecStart=/usr/local/bin/dn42-autopeer-daemon
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target

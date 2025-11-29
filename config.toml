@@ -1,0 +1,19 @@
+[API]
+api_port = 4242
+# Leave a listen address empty to disable that family
+listen_address_v4 = "127.0.0.1"
+listen_address_v6 = "::1"
+secret = "abcdefghijklmnopqrstuvwxyz1234567890"
+
+[Peer]
+# Your WireGuard IPv6 link-local address
+link_local = "fe80::253"
+wireguard_private_key = "your_private_key_here"
+# Uses port_prefix_number * 10000 + (ASN % 10000) as the port
+# e.g., port_prefix_number = 2, peer ASN = 4242420253
+# resulting WireGuard listen port = 20253
+port_prefix_number = 2
+
+[Environment]
+systemctl_path = "/usr/bin/systemctl"
+birdc_path = "/usr/sbin/birdc"

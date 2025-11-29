@@ -1,0 +1,21 @@
+[package]
+name = "dn42-autopeer-daemon"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-channel = "2.5.0"
+async-h1 = "2.3.4"
+async-io = "2.6.0"
+ctrlc = "3.5.1"
+futures-lite = "2.6.1"
+http-types = "2.12.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+smol = "2.0.2"
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+anyhow = "1.0.100"
+toml = "0.9.8"
+lazy_static = "1.5.0"
+askama = "0.14.0"
+url = "2.5.7"
