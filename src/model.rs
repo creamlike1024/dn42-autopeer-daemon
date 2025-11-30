@@ -19,8 +19,11 @@ pub struct PeerDbInfo {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Peer {
     pub asn: u64,
+    #[serde(default)]
     pub wireguard_endpoint: String,
+    #[serde(default)]
     pub wireguard_link_local: String,
+    #[serde(default)]
     pub wireguard_public_key: String,
 }
 
@@ -106,6 +109,7 @@ pub struct BirdConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
     fn p() -> Peer {
         Peer {
             asn: 0,
@@ -213,5 +217,21 @@ mod tests {
         assert!(!peer.is_valid_wireguard_public_key());
         peer.wireguard_public_key = format!("{}!=", "A".repeat(42));
         assert!(!peer.is_valid_wireguard_public_key());
+    }
+
+    #[test]
+    fn test_deserialize_only_asn() {
+        let v = json!({"asn": 4242420000u64});
+        let peer: Peer = serde_json::from_value(v).unwrap();
+        assert_eq!(peer.asn, 4242420000u64);
+        assert_eq!(peer.wireguard_endpoint, "");
+        assert_eq!(peer.wireguard_link_local, "");
+        assert_eq!(peer.wireguard_public_key, "");
+    }
+
+    #[test]
+    fn test_deserialize_missing_asn_error() {
+        let v = json!({});
+        assert!(serde_json::from_value::<Peer>(v).is_err());
     }
 }
