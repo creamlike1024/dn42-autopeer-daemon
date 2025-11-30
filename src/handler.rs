@@ -41,7 +41,7 @@ pub async fn serve_router(req: Request, db: Db) -> http_types::Result<Response> 
 }
 
 pub async fn handle_add(mut req: Request, db: Db) -> http_types::Result<Response> {
-    let req_peer: Peer = match req.body_json().await {
+    let mut req_peer: Peer = match req.body_json().await {
         Ok(data) => data,
         Err(e) => {
             eprintln!("Failed to parse JSON: {}", e);
@@ -61,6 +61,7 @@ pub async fn handle_add(mut req: Request, db: Db) -> http_types::Result<Response
         res.set_body("Invalid ASN".to_string());
         return Ok(res);
     }
+    req_peer.wireguard_link_local_strip_cidr();
     if !req_peer.is_valid_link_local() {
         let mut res = Response::new(StatusCode::BadRequest);
         res.set_body("Invalid Link-Local address".to_string());

@@ -76,6 +76,16 @@ impl Peer {
         }
     }
 
+    pub fn wireguard_link_local_strip_cidr(&mut self) {
+        let s = self.wireguard_link_local.as_str();
+        match s.split_once('/') {
+            Some((addr, suffix)) if suffix == "64" || suffix == "128" => {
+                self.wireguard_link_local = addr.to_string();
+            }
+            _ => {}
+        }
+    }
+
     pub fn is_valid_wireguard_public_key(&self) -> bool {
         if self.wireguard_public_key.len() != 44 {
             return false;
