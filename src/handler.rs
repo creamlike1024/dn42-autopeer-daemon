@@ -66,6 +66,11 @@ pub async fn handle_add(mut req: Request, db: Db) -> http_types::Result<Response
         res.set_body("Invalid Link-Local address".to_string());
         return Ok(res);
     }
+    if !req_peer.is_valid_wireguard_public_key() {
+        let mut res = Response::new(StatusCode::BadRequest);
+        res.set_body("Invalid Wireguard public key".to_string());
+        return Ok(res);
+    }
 
     let req_peer_clone = req_peer.clone();
 

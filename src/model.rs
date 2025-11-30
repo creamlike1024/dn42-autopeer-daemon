@@ -1,6 +1,8 @@
 use crate::CONFIG;
 use anyhow::Result;
 use askama::Template;
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -67,6 +69,16 @@ impl Peer {
                 let seg0 = addr.segments()[0];
                 (seg0 & 0xFFC0) == 0xFE80
             }
+            Err(_) => false,
+        }
+    }
+
+    pub fn is_valid_wireguard_public_key(&self) -> bool {
+        if self.wireguard_public_key.len() != 44 {
+            return false;
+        }
+        match BASE64_STANDARD.decode(&self.wireguard_public_key) {
+            Ok(bytes) => bytes.len() == 32,
             Err(_) => false,
         }
     }
@@ -183,5 +195,23 @@ mod tests {
         assert!(!peer.is_valid_link_local());
         peer.wireguard_link_local = "not-an-ip".to_string();
         assert!(!peer.is_valid_link_local());
+    }
+
+    #[test]
+    fn test_public_key_valid() {
+        let mut peer = p();
+        peer.wireguard_public_key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_string();
+        assert!(peer.is_valid_wireguard_public_key());
+    }
+
+    #[test]
+    fn test_public_key_invalid() {
+        let mut peer = p();
+        peer.wireguard_public_key = "not-a-key".to_string();
+        assert!(!peer.is_valid_wireguard_public_key());
+        peer.wireguard_public_key = format!("{}==", "A".repeat(42));
+        assert!(!peer.is_valid_wireguard_public_key());
+        peer.wireguard_public_key = format!("{}!=", "A".repeat(42));
+        assert!(!peer.is_valid_wireguard_public_key());
     }
 }
