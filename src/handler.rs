@@ -194,7 +194,7 @@ pub async fn handle_del(mut req: Request, db: Db) -> http_types::Result<Response
                         }
                         Err(e) => match e {
                             PeerDbError::NotFound => {
-                                let mut res = Response::new(StatusCode::NotFound);
+                                let mut res = Response::new(StatusCode::BadRequest);
                                 res.set_body(format!("Peer not found: {}", req_peer.asn));
                                 Ok(res)
                             }
@@ -223,7 +223,7 @@ pub async fn handle_del(mut req: Request, db: Db) -> http_types::Result<Response
         // failed to get peer from db
         Err(e) => match e {
             PeerDbError::NotFound => {
-                let mut res = Response::new(StatusCode::NotFound);
+                let mut res = Response::new(StatusCode::BadRequest);
                 res.set_body(format!("Peer not found: {}", req_peer.asn));
                 Ok(res)
             }
@@ -286,7 +286,7 @@ pub async fn handle_get(mut req: Request, db: Db) -> http_types::Result<Response
         }
         Err(e) => match e {
             PeerDbError::NotFound => {
-                let mut res = Response::new(StatusCode::NotFound);
+                let mut res = Response::new(StatusCode::BadRequest);
                 res.set_body(format!("Peer not found: {}", req_peer.asn));
                 Ok(res)
             }
