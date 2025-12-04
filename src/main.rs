@@ -34,6 +34,9 @@ struct PeerConfig {
 
 #[derive(Deserialize, Debug)]
 struct EnvironmentConfig {
+    init_system: String,
+    rc_service_path: String,
+    rc_update_path: String,
     systemctl_path: String,
     birdc_path: String,
 }
@@ -112,8 +115,14 @@ fn check_config() -> Result<(), String> {
         Err("No listen address found".to_string())
     } else if CONFIG.peer.port_prefix_number == 0 || CONFIG.peer.port_prefix_number >= 6 {
         Err("Port prefix number must be between 1 and 5".to_string())
-    } else if CONFIG.env.systemctl_path.is_empty() {
+    } else if CONFIG.env.init_system != "systemd" && CONFIG.env.init_system != "openrc" {
+        Err("Unsupported init system".to_string())
+    } else if CONFIG.env.init_system == "systemd" && CONFIG.env.systemctl_path.is_empty() {
         Err("Environment: systemctl binary path is empty".to_string())
+    } else if CONFIG.env.init_system == "openrc" && CONFIG.env.rc_service_path.is_empty() {
+        Err("Environment: rc-service binary path is empty".to_string())
+    } else if CONFIG.env.init_system == "openrc" && CONFIG.env.rc_update_path.is_empty() {
+        Err("Environment: rc-update binary path is empty".to_string())
     } else if CONFIG.env.birdc_path.is_empty() {
         Err("Environment: birdc binary path is empty".to_string())
     } else {

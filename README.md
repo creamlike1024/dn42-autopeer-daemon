@@ -3,7 +3,8 @@
 A small daemon that automates adding and removing dn42 peers, and provides a simple API.
 
 ## Requirements
-- Linux with `systemd`
+- Linux with `systemd` or Alpine Linux
+- `wireguard-tools-openrc` package installed(for Alpine Linux)
 - `wg-quick` is available
 - BIRD2 installed
 - Run as root (or grant sufficient permissions to complete all operations)
@@ -14,7 +15,8 @@ The program assumes that you have a `/etc/bird/peers` folder based on the BIRD2 
 It does the following:
 - Writes peer info to `peers.db`
 - Generates WireGuard and BIRD configurations and places them in `/etc/wireguard` and `/etc/bird/peers`
-- Runs `systemctl start wg-quick@<interface_name>` to start the tunnel and `systemctl enable wg-quick@<interface_name>` to enable autostart
+- On systemd-based Linux, runs `systemctl start wg-quick@<interface_name>` to start the tunnel and `systemctl enable wg-quick@<interface_name>` to enable autostart
+- On Alpine Linux (OpenRC), create per-interface symlink `ln -s /etc/init.d/wg-quick /etc/init.d/wg-quick.<interface_name>`, then run `rc-service wg-quick.<interface_name> start` to start the tunnel and `rc-update add wg-quick.<interface_name> default` to enable autostart
 - Runs `birdc configure` to reload the BIRD configuration
 
 
