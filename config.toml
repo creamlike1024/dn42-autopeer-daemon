@@ -18,6 +18,6 @@ port_prefix_number = 2
 # Select your init system: "systemd" or "openrc"
 init_system = "systemd"
 systemctl_path = "/usr/bin/systemctl"
-rc-service_pach = "/sbin/rc-service"
-rc-update_path = "/sbin/rc-update"
+rc_service_path = "/sbin/rc-service"
+rc_update_path = "/sbin/rc-update"
 birdc_path = "/usr/sbin/birdc"
