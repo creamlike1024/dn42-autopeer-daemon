@@ -23,7 +23,7 @@ It does the following:
 ## Limitations
 The templates are limited to using WireGuard tunnels and BIRD with MP-BGP. This is currently the popular peering method in the DN42 community.
 
-I have only tested on Debian.
+I have only tested on Debian and Alpine Linux.
 
 ## Configuration
 Fill in `config.toml`
