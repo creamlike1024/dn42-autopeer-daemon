@@ -29,7 +29,7 @@ pub struct Peer {
 
 impl Peer {
     pub fn gen_interface_name(&self) -> String {
-        format!("dn42_{}", self.asn % 10000)
+        format!("dn42_{:04}", self.asn % 10000)
     }
 
     pub fn gen_wireguard_config_path(&self) -> String {
