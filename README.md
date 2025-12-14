@@ -2,6 +2,16 @@
 
 A small daemon that automates adding and removing dn42 peers, and provides a simple API.
 
+## Build
+
+The program uses a bundled version of SQLite, so a C compiler is required.
+
+You can use [cargo-zigbuild](https://github.com/rust-cross/cargo-zigbuild) to easily build the musl version.
+
+```
+cargo zigbuild --release --target x86_64-unknown-linux-musl
+```
+
 ## Requirements
 - Linux with `systemd` or Alpine Linux
 - `wireguard-tools-openrc` package installed(for Alpine Linux)
