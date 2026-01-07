@@ -11,6 +11,7 @@ pub struct PeerDbInfo {
     pub wireguard_endpoint: String,
     pub wireguard_link_local: String,
     pub wireguard_public_key: String,
+    pub mtu: u16,
     pub interface_name: String,
     pub wireguard_config_path: String,
     pub bird_config_path: String,
@@ -25,6 +26,8 @@ pub struct Peer {
     pub wireguard_link_local: String,
     #[serde(default)]
     pub wireguard_public_key: String,
+    #[serde(default)]
+    pub mtu: u16,
 }
 
 impl Peer {
@@ -95,6 +98,10 @@ impl Peer {
             Err(_) => false,
         }
     }
+
+    pub fn is_valid_mtu(&self) -> bool {
+        self.mtu >= 1280
+    }
 }
 
 #[derive(Template)]
@@ -105,6 +112,7 @@ pub struct WireguardConfig {
     pub wireguard_link_local_ipv6: String,
     pub wireguard_peer_public_key: String,
     pub wireguard_peer_endpoint: String,
+    pub mtu: u16,
 }
 
 #[derive(Template)]

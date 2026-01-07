@@ -14,6 +14,7 @@ pub fn gen_wireguard_config(peer: &Peer) -> Result<String> {
         wireguard_link_local_ipv6: CONFIG.peer.link_local.clone(),
         wireguard_peer_public_key: peer.wireguard_public_key.clone(),
         wireguard_peer_endpoint: peer.wireguard_endpoint.clone(),
+        mtu: peer.mtu,
     };
 
     wg_config

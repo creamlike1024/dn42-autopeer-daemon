@@ -53,7 +53,8 @@ curl -sS -X POST http://127.0.0.1:4242/add \
         "asn": 4242421234,
         "wireguard_endpoint": "peer.example.net:51820",
         "wireguard_link_local": "fe80::beef",
-        "wireguard_public_key": "<peer_public_key>"
+        "wireguard_public_key": "<peer_public_key>",
+        "mtu": 1420
       }'
 ```
 
@@ -99,7 +100,8 @@ Responses:
       "asn": 4242420253,
       "wireguard_endpoint": "host.example.com:51820",
       "wireguard_link_local": "fe80::abcd",
-      "wireguard_public_key": "<peer_public_key>"
+      "wireguard_public_key": "<peer_public_key>",
+      "mtu": 1420
     }
     ```
   - `400 Bad Request`

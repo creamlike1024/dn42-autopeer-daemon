@@ -73,6 +73,12 @@ pub async fn handle_add(mut req: Request, db: Db) -> http_types::Result<Response
         return Ok(res);
     }
 
+    if !req_peer.is_valid_mtu() {
+        let mut res = Response::new(StatusCode::BadRequest);
+        res.set_body("Invalid MTU".to_string());
+        return Ok(res);
+    }
+
     let req_peer_clone = req_peer.clone();
 
     let db_result: Result<(), PeerDbError> = smol::unblock(move || match db.lock() {
@@ -267,6 +273,7 @@ pub async fn handle_get(mut req: Request, db: Db) -> http_types::Result<Response
                 wireguard_endpoint: peer.wireguard_endpoint.clone(),
                 wireguard_link_local: peer.wireguard_link_local.clone(),
                 wireguard_public_key: peer.wireguard_public_key.clone(),
+                mtu: peer.mtu,
             }),
             Err(e) => Err(e),
         },
