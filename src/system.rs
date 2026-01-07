@@ -83,12 +83,8 @@ pub fn apply_config(interface_name: &str) -> Result<()> {
         // ln -s /etc/init.d/wg-quick /etc/init.d/wg-quick.interface_name
         let item = format!("wg-quick.{}", interface_name);
         let link_file_path = format!("/etc/init.d/{}", item.as_str());
-        let args = vec!["-s", "/etc/init.d/wg-quick", &link_file_path];
-        let output = Command::new("ln").args(&args).output()?;
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(anyhow!("Failed to create symbolic link: {}", stderr));
-        }
+        std::os::unix::fs::symlink("/etc/init.d/wg-quick", &link_file_path)
+            .map_err(|e| anyhow!("Failed to create symbolic link: {}", e))?;
 
         // rc-service wg-quick.interface_name start
         let args = vec![&item, "start"];
