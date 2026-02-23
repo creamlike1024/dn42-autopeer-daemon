@@ -51,7 +51,7 @@ pub async fn handle_add(mut req: Request, db: Db) -> http_types::Result<Response
         }
     };
 
-    if !req_peer.is_valid_wireguard_endpoint() {
+    if !req_peer.wireguard_endpoint.is_empty() && !req_peer.is_valid_wireguard_endpoint() {
         let mut res = Response::new(StatusCode::BadRequest);
         res.set_body("Invalid Wireguard endpoint".to_string());
         return Ok(res);

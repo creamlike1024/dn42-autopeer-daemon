@@ -116,6 +116,16 @@ pub struct WireguardConfig {
 }
 
 #[derive(Template)]
+#[template(path = "wireguard_passive.conf", escape = "none")]
+pub struct WireguardPassiveConfig {
+    pub wireguard_private_key: String,
+    pub wireguard_listen_port: u16,
+    pub wireguard_link_local_ipv6: String,
+    pub wireguard_peer_public_key: String,
+    pub mtu: u16,
+}
+
+#[derive(Template)]
 #[template(path = "peer_mpbgp.conf", escape = "none")]
 pub struct BirdConfig {
     pub interface_name: String,
@@ -134,6 +144,7 @@ mod tests {
             wireguard_endpoint: "1.2.3.4:51820".to_string(),
             wireguard_link_local: "fe80::1".to_string(),
             wireguard_public_key: "test".to_string(),
+            mtu: 1420,
         }
     }
 
