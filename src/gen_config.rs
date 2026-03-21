@@ -8,32 +8,19 @@ pub fn gen_wireguard_config(peer: &Peer) -> Result<String> {
         Ok(port) => port,
         Err(e) => return Err(e),
     };
-    if peer.wireguard_endpoint.is_empty() {
-        let wg_config = WireguardPassiveConfig {
-            wireguard_private_key: CONFIG.peer.wireguard_private_key.clone(),
-            wireguard_listen_port: listen_port,
-            wireguard_link_local_ipv6: CONFIG.peer.link_local.clone(),
-            wireguard_peer_public_key: peer.wireguard_public_key.clone(),
-            mtu: peer.mtu,
-        };
+    let wg_config = WireguardConfig {
+        wireguard_private_key: CONFIG.peer.wireguard_private_key.clone(),
+        wireguard_listen_port: listen_port,
+        wireguard_link_local_ipv6: CONFIG.peer.link_local.clone(),
+        wireguard_peer_public_key: peer.wireguard_public_key.clone(),
+        wireguard_peer_endpoint: peer.wireguard_endpoint.clone(),
+        wireguard_preshared_key: peer.wireguard_preshared_key.clone(),
+        mtu: peer.mtu,
+    };
 
-        wg_config
-            .render()
-            .map_err(|e| anyhow!("Failed to render WireGuard passive config: {}", e))
-    } else {
-        let wg_config = WireguardConfig {
-            wireguard_private_key: CONFIG.peer.wireguard_private_key.clone(),
-            wireguard_listen_port: listen_port,
-            wireguard_link_local_ipv6: CONFIG.peer.link_local.clone(),
-            wireguard_peer_public_key: peer.wireguard_public_key.clone(),
-            wireguard_peer_endpoint: peer.wireguard_endpoint.clone(),
-            mtu: peer.mtu,
-        };
-
-        wg_config
-            .render()
-            .map_err(|e| anyhow!("Failed to render WireGuard config: {}", e))
-    }
+    wg_config
+        .render()
+        .map_err(|e| anyhow!("Failed to render WireGuard config: {}", e))
 }
 
 pub fn gen_bird_config(peer: &Peer) -> Result<String> {
@@ -42,6 +29,7 @@ pub fn gen_bird_config(peer: &Peer) -> Result<String> {
         wireguard_link_local_ipv6: CONFIG.peer.link_local.clone(),
         peer_link_local_ipv6: peer.wireguard_link_local.clone(),
         peer_asn: peer.asn,
+        is_passive: peer.wireguard_endpoint.is_none(),
     };
     bird_config
         .render()

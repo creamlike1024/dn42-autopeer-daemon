@@ -46,9 +46,10 @@ pub fn init_db(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS peers (
             asn                 INTEGER PRIMARY KEY,
-            wireguard_endpoint  TEXT NOT NULL,
+            wireguard_endpoint  TEXT,
             wireguard_link_local TEXT NOT NULL,
             wireguard_public_key TEXT NOT NULL,
+            wireguard_preshared_key TEXT,
             mtu INTEGER NOT NULL,
             interface_name TEXT NOT NULL,
             wireguard_config_path TEXT NOT NULL,
@@ -61,13 +62,14 @@ pub fn init_db(conn: &Connection) -> Result<()> {
 
 pub fn add_peer(conn: &Connection, peer: &Peer) -> Result<usize, PeerDbError> {
     let result = conn.execute(
-        "INSERT INTO peers (asn, wireguard_endpoint, wireguard_link_local, wireguard_public_key, mtu, interface_name, wireguard_config_path, bird_config_path)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        "INSERT INTO peers (asn, wireguard_endpoint, wireguard_link_local, wireguard_public_key, wireguard_preshared_key, mtu, interface_name, wireguard_config_path, bird_config_path)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
         rusqlite::params![
             peer.asn,
             peer.wireguard_endpoint,
             peer.wireguard_link_local,
             peer.wireguard_public_key,
+            peer.wireguard_preshared_key,
             peer.mtu,
             peer.gen_interface_name(),
             peer.gen_wireguard_config_path(),
@@ -80,7 +82,7 @@ pub fn add_peer(conn: &Connection, peer: &Peer) -> Result<usize, PeerDbError> {
 
 pub fn get_peer_by_asn(conn: &Connection, asn: u64) -> Result<PeerDbInfo, PeerDbError> {
     let peer = conn.query_row(
-        "SELECT asn, wireguard_endpoint, wireguard_link_local, wireguard_public_key, mtu, interface_name, wireguard_config_path, bird_config_path FROM peers WHERE asn = ?1",
+        "SELECT asn, wireguard_endpoint, wireguard_link_local, wireguard_public_key, wireguard_preshared_key, mtu, interface_name, wireguard_config_path, bird_config_path FROM peers WHERE asn = ?1",
         rusqlite::params![asn],
         |row| {
             Ok(PeerDbInfo {
@@ -88,10 +90,11 @@ pub fn get_peer_by_asn(conn: &Connection, asn: u64) -> Result<PeerDbInfo, PeerDb
                 wireguard_endpoint: row.get(1)?,
                 wireguard_link_local: row.get(2)?,
                 wireguard_public_key: row.get(3)?,
-                mtu: row.get(4)?,
-                interface_name: row.get(5)?,
-                wireguard_config_path: row.get(6)?,
-                bird_config_path: row.get(7)?
+                wireguard_preshared_key: row.get(4)?,
+                mtu: row.get(5)?,
+                interface_name: row.get(6)?,
+                wireguard_config_path: row.get(7)?,
+                bird_config_path: row.get(8)?
             })
         },
     );

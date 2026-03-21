@@ -8,9 +8,10 @@ use url::Url;
 
 pub struct PeerDbInfo {
     pub asn: u64,
-    pub wireguard_endpoint: String,
+    pub wireguard_endpoint: Option<String>,
     pub wireguard_link_local: String,
     pub wireguard_public_key: String,
+    pub wireguard_preshared_key: Option<String>,
     pub mtu: u16,
     pub interface_name: String,
     pub wireguard_config_path: String,
@@ -21,11 +22,13 @@ pub struct PeerDbInfo {
 pub struct Peer {
     pub asn: u64,
     #[serde(default)]
-    pub wireguard_endpoint: String,
+    pub wireguard_endpoint: Option<String>,
     #[serde(default)]
     pub wireguard_link_local: String,
     #[serde(default)]
     pub wireguard_public_key: String,
+    #[serde(default)]
+    pub wireguard_preshared_key: Option<String>,
     #[serde(default)]
     pub mtu: u16,
 }
@@ -36,10 +39,22 @@ impl Peer {
     }
 
     pub fn gen_wireguard_config_path(&self) -> String {
+        #[cfg(feature = "dry-run")]
+        {
+            let _ = std::fs::create_dir_all("test_output/wireguard");
+            return format!("test_output/wireguard/{}.conf", self.gen_interface_name());
+        }
+        #[cfg(not(feature = "dry-run"))]
         format!("/etc/wireguard/{}.conf", self.gen_interface_name())
     }
 
     pub fn gen_bird_config_path(&self) -> String {
+        #[cfg(feature = "dry-run")]
+        {
+            let _ = std::fs::create_dir_all("test_output/bird/peers");
+            return format!("test_output/bird/peers/{}.conf", self.gen_interface_name());
+        }
+        #[cfg(not(feature = "dry-run"))]
         format!("/etc/bird/peers/{}.conf", self.gen_interface_name())
     }
 
@@ -55,13 +70,18 @@ impl Peer {
     }
 
     pub fn is_valid_wireguard_endpoint(&self) -> bool {
-        let wg_url = format!("wg://{}", self.wireguard_endpoint);
-        let Ok(u) = Url::parse(&wg_url) else {
-            return false;
-        };
-        match (u.host(), u.port()) {
-            (Some(_), Some(p)) if p > 0 => true,
-            _ => false,
+        match &self.wireguard_endpoint {
+            Some(ep) => {
+                let wg_url = format!("wg://{}", ep);
+                let Ok(u) = Url::parse(&wg_url) else {
+                    return false;
+                };
+                match (u.host(), u.port()) {
+                    (Some(_), Some(p)) if p > 0 => true,
+                    _ => false,
+                }
+            }
+            None => true,
         }
     }
 
@@ -99,6 +119,21 @@ impl Peer {
         }
     }
 
+    pub fn is_valid_wireguard_preshared_key(&self) -> bool {
+        match &self.wireguard_preshared_key {
+            Some(key) => {
+                if key.len() != 44 {
+                    return false;
+                }
+                match BASE64_STANDARD.decode(key) {
+                    Ok(bytes) => bytes.len() == 32,
+                    Err(_) => false,
+                }
+            }
+            None => true,
+        }
+    }
+
     pub fn is_valid_mtu(&self) -> bool {
         self.mtu >= 1280
     }
@@ -111,17 +146,8 @@ pub struct WireguardConfig {
     pub wireguard_listen_port: u16,
     pub wireguard_link_local_ipv6: String,
     pub wireguard_peer_public_key: String,
-    pub wireguard_peer_endpoint: String,
-    pub mtu: u16,
-}
-
-#[derive(Template)]
-#[template(path = "wireguard_passive.conf", escape = "none")]
-pub struct WireguardPassiveConfig {
-    pub wireguard_private_key: String,
-    pub wireguard_listen_port: u16,
-    pub wireguard_link_local_ipv6: String,
-    pub wireguard_peer_public_key: String,
+    pub wireguard_peer_endpoint: Option<String>,
+    pub wireguard_preshared_key: Option<String>,
     pub mtu: u16,
 }
 
@@ -132,6 +158,7 @@ pub struct BirdConfig {
     pub wireguard_link_local_ipv6: String,
     pub peer_link_local_ipv6: String,
     pub peer_asn: u64,
+    pub is_passive: bool,
 }
 
 #[cfg(test)]
@@ -141,9 +168,10 @@ mod tests {
     fn p() -> Peer {
         Peer {
             asn: 0,
-            wireguard_endpoint: "1.2.3.4:51820".to_string(),
+            wireguard_endpoint: Some("1.2.3.4:51820".to_string()),
             wireguard_link_local: "fe80::1".to_string(),
             wireguard_public_key: "test".to_string(),
+            wireguard_preshared_key: None,
             mtu: 1420,
         }
     }
@@ -151,34 +179,36 @@ mod tests {
     #[test]
     fn test_endpoint_valid() {
         let mut peer = p();
-        peer.wireguard_endpoint = "1.2.3.4:51820".to_string();
+        peer.wireguard_endpoint = None;
         assert!(peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "example.com:12345".to_string();
+        peer.wireguard_endpoint = Some("1.2.3.4:51820".to_string());
         assert!(peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "[::1]:51820".to_string();
+        peer.wireguard_endpoint = Some("example.com:12345".to_string());
         assert!(peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "[2001:db8::1]:1".to_string();
+        peer.wireguard_endpoint = Some("[::1]:51820".to_string());
         assert!(peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "a-b.test:65535".to_string();
+        peer.wireguard_endpoint = Some("[2001:db8::1]:1".to_string());
+        assert!(peer.is_valid_wireguard_endpoint());
+        peer.wireguard_endpoint = Some("a-b.test:65535".to_string());
         assert!(peer.is_valid_wireguard_endpoint());
     }
 
     #[test]
     fn test_endpoint_invalid() {
         let mut peer = p();
-        peer.wireguard_endpoint = "1.2.3.4".to_string();
+        peer.wireguard_endpoint = Some("1.2.3.4".to_string());
         assert!(!peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "::1:51820".to_string();
+        peer.wireguard_endpoint = Some("::1:51820".to_string());
         assert!(!peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "[::1]".to_string();
+        peer.wireguard_endpoint = Some("[::1]".to_string());
         assert!(!peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "example.com:0".to_string();
+        peer.wireguard_endpoint = Some("example.com:0".to_string());
         assert!(!peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "example.com:65536".to_string();
+        peer.wireguard_endpoint = Some("example.com:65536".to_string());
         assert!(!peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = ":80".to_string();
+        peer.wireguard_endpoint = Some(":80".to_string());
         assert!(!peer.is_valid_wireguard_endpoint());
-        peer.wireguard_endpoint = "".to_string();
+        peer.wireguard_endpoint = Some("".to_string());
         assert!(!peer.is_valid_wireguard_endpoint());
     }
 
@@ -249,13 +279,36 @@ mod tests {
     }
 
     #[test]
+    fn test_preshared_key_valid() {
+        let mut peer = p();
+        peer.wireguard_preshared_key = None;
+        assert!(peer.is_valid_wireguard_preshared_key());
+        peer.wireguard_preshared_key = Some("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_string());
+        assert!(peer.is_valid_wireguard_preshared_key());
+    }
+
+    #[test]
+    fn test_preshared_key_invalid() {
+        let mut peer = p();
+        peer.wireguard_preshared_key = Some("".to_string());
+        assert!(!peer.is_valid_wireguard_preshared_key());
+        peer.wireguard_preshared_key = Some("not-a-key".to_string());
+        assert!(!peer.is_valid_wireguard_preshared_key());
+        peer.wireguard_preshared_key = Some(format!("{}==", "A".repeat(42)));
+        assert!(!peer.is_valid_wireguard_preshared_key());
+        peer.wireguard_preshared_key = Some(format!("{}!=", "A".repeat(42)));
+        assert!(!peer.is_valid_wireguard_preshared_key());
+    }
+
+    #[test]
     fn test_deserialize_only_asn() {
         let v = json!({"asn": 4242420000u64});
         let peer: Peer = serde_json::from_value(v).unwrap();
         assert_eq!(peer.asn, 4242420000u64);
-        assert_eq!(peer.wireguard_endpoint, "");
+        assert_eq!(peer.wireguard_endpoint, None);
         assert_eq!(peer.wireguard_link_local, "");
         assert_eq!(peer.wireguard_public_key, "");
+        assert_eq!(peer.wireguard_preshared_key, None);
     }
 
     #[test]

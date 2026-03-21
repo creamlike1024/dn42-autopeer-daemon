@@ -51,7 +51,7 @@ pub async fn handle_add(mut req: Request, db: Db) -> http_types::Result<Response
         }
     };
 
-    if !req_peer.wireguard_endpoint.is_empty() && !req_peer.is_valid_wireguard_endpoint() {
+    if !req_peer.is_valid_wireguard_endpoint() {
         let mut res = Response::new(StatusCode::BadRequest);
         res.set_body("Invalid Wireguard endpoint".to_string());
         return Ok(res);
@@ -70,6 +70,12 @@ pub async fn handle_add(mut req: Request, db: Db) -> http_types::Result<Response
     if !req_peer.is_valid_wireguard_public_key() {
         let mut res = Response::new(StatusCode::BadRequest);
         res.set_body("Invalid Wireguard public key".to_string());
+        return Ok(res);
+    }
+
+    if !req_peer.is_valid_wireguard_preshared_key() {
+        let mut res = Response::new(StatusCode::BadRequest);
+        res.set_body("Invalid Wireguard preshared key".to_string());
         return Ok(res);
     }
 
@@ -273,6 +279,7 @@ pub async fn handle_get(mut req: Request, db: Db) -> http_types::Result<Response
                 wireguard_endpoint: peer.wireguard_endpoint.clone(),
                 wireguard_link_local: peer.wireguard_link_local.clone(),
                 wireguard_public_key: peer.wireguard_public_key.clone(),
+                wireguard_preshared_key: peer.wireguard_preshared_key.clone(),
                 mtu: peer.mtu,
             }),
             Err(e) => Err(e),

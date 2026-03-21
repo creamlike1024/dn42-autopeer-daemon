@@ -134,6 +134,15 @@ fn check_config() -> Result<(), String> {
 }
 
 fn main() -> std::io::Result<()> {
+    // Check for version flag
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|arg| arg == "-V" || arg == "--version" || arg == "-v") {
+        println!("dn42-autopeer-daemon v{}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
+    println!("Starting dn42-autopeer-daemon v{}", env!("CARGO_PKG_VERSION"));
+
     if let Err(err_string) = check_config() {
         eprintln!("Error: {}", err_string);
         return Err(io::Error::new(io::ErrorKind::Other, err_string));

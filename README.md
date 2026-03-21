@@ -51,12 +51,17 @@ curl -sS -X POST http://127.0.0.1:4242/add \
   -H "Content-Type: application/json" \
   -d '{
         "asn": 4242421234,
-        "wireguard_endpoint": "peer.example.net:51820",
+        "wireguard_endpoint": null,
         "wireguard_link_local": "fe80::beef",
         "wireguard_public_key": "<peer_public_key>",
+        "wireguard_preshared_key": "<optional_preshared_key>",
         "mtu": 1420
       }'
 ```
+
+**Notes on Optional Fields:**
+- `wireguard_endpoint`: (Optional) If omitted or set to `null`, the daemon configures the connection in **passive mode** (it listens for incoming connections but does not actively connect). If a valid endpoint address is provided (e.g., `"peer.example.net:51820"`), it operates in **active mode**. Empty strings or invalid formats are rejected.
+- `wireguard_preshared_key`: (Optional) If omitted or set to `null`, the connection will be established without a Pre-Shared Key. If a valid 32-byte Base64 encoded key is provided, the WireGuard configuration will utilize it (`PresharedKey`). Empty strings (`""`) or incorrectly formatted keys are rejected.
 
 Responses:
   - `200 OK`
@@ -98,9 +103,10 @@ Responses:
     ```json
     {
       "asn": 4242420253,
-      "wireguard_endpoint": "host.example.com:51820",
+      "wireguard_endpoint": null,
       "wireguard_link_local": "fe80::abcd",
       "wireguard_public_key": "<peer_public_key>",
+      "wireguard_preshared_key": null,
       "mtu": 1420
     }
     ```

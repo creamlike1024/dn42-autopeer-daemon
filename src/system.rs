@@ -41,10 +41,17 @@ pub fn save_config(
 }
 
 pub fn apply_config(interface_name: &str) -> Result<()> {
-    let _guard = SYSTEM_OP_LOCK
-        .lock()
-        .map_err(|e| anyhow!("Mutex lock error: {}", e))?;
-    if CONFIG.env.init_system == "systemd" {
+    #[cfg(feature = "dry-run")]
+    {
+        println!("Dry-run: skipping apply_config system commands for {}", interface_name);
+        return Ok(());
+    }
+    #[cfg(not(feature = "dry-run"))]
+    {
+        let _guard = SYSTEM_OP_LOCK
+            .lock()
+            .map_err(|e| anyhow!("Mutex lock error: {}", e))?;
+        if CONFIG.env.init_system == "systemd" {
         let item = format!("wg-quick@{}", interface_name);
 
         // systemctl start wg-quick@interface_name
@@ -124,6 +131,7 @@ pub fn apply_config(interface_name: &str) -> Result<()> {
             CONFIG.env.init_system
         ))
     }
+    }
 }
 
 pub fn remove_config(
@@ -131,10 +139,18 @@ pub fn remove_config(
     wg_config_path: &str,
     bird_config_path: &str,
 ) -> Result<()> {
-    let _guard = SYSTEM_OP_LOCK
-        .lock()
-        .map_err(|e| anyhow!("Mutex lock error: {}", e))?;
-    if CONFIG.env.init_system == "systemd" {
+    #[cfg(feature = "dry-run")]
+    {
+        println!("Dry-run: skipping remove_config system commands for {}", interface_name);
+        delete_config(wg_config_path, bird_config_path)?;
+        return Ok(());
+    }
+    #[cfg(not(feature = "dry-run"))]
+    {
+        let _guard = SYSTEM_OP_LOCK
+            .lock()
+            .map_err(|e| anyhow!("Mutex lock error: {}", e))?;
+        if CONFIG.env.init_system == "systemd" {
         let item = format!("wg-quick@{}", interface_name);
 
         let args = vec!["disable", item.as_str()];
@@ -211,5 +227,6 @@ pub fn remove_config(
             "Unsupported init system: {}",
             CONFIG.env.init_system
         ))
+    }
     }
 }

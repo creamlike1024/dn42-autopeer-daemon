@@ -1,6 +1,6 @@
 [package]
 name = "dn42-autopeer-daemon"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
@@ -20,3 +20,6 @@ lazy_static = "1.5.0"
 askama = "0.14.0"
 url = "2.5.7"
 base64 = "0.21"
+
+[features]
+dry-run = []
