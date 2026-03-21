@@ -1,0 +1,56 @@
+name: Release Binary
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            arch: amd64
+          - target: aarch64-unknown-linux-musl
+            arch: aarch64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        run: |
+          rustup target add ${{ matrix.target }}
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: latest
+
+      - name: Install cargo-zigbuild
+        run: cargo install cargo-zigbuild
+
+      - name: Build with cargo-zigbuild
+        run: cargo zigbuild --release --target ${{ matrix.target }}
+        env:
+          cargo_build_version: ${{ github.event.release.tag_name }}
+
+      - name: Create Release Package
+        run: |
+          DIST_DIR="dn42-autopeer-daemon-${{ matrix.arch }}"
+          mkdir -p "$DIST_DIR"
+          cp "target/${{ matrix.target }}/release/dn42-autopeer-daemon" "$DIST_DIR/"
+          cp "config.toml" "$DIST_DIR/"
+          cp "dn42-autopeer-daemon.service" "$DIST_DIR/"
+          tar -czvf "${DIST_DIR}.tar.gz" "$DIST_DIR"
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: dn42-autopeer-daemon-${{ matrix.arch }}.tar.gz
